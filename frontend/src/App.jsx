@@ -1,58 +1,82 @@
 import { useEffect, useState } from "react";
+import './index.css';
 
-const App = () => {
+function App() {
+  const [overview, setOverview] = useState("");
   const [education, setEducation] = useState([]);
   const [experience, setExperience] = useState([]);
-  const [overview, setOverview] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch Education
-    fetch("http://localhost:8000/getEdu")
-      .then((res) => res.json())
-      .then((data) => setEducation(data))
-      .catch((err) => console.error("Error fetching education:", err));
+    const fetchData = async () => {
+      try {
+        const [overviewRes, eduRes, expRes] = await Promise.all([
+          fetch("http://localhost:8000/getOverview").then(res => res.json()),
+          fetch("http://localhost:8000/getEdu").then(res => res.json()),
+          fetch("http://localhost:8000/getExp").then(res => res.json()),
+        ]);
 
-    // Fetch Experience
-    fetch("http://localhost:8000/getExp")
-      .then((res) => res.json())
-      .then((data) => setExperience(data))
-      .catch((err) => console.error("Error fetching experience:", err));
+        console.log("Overview:", overviewRes);
+        console.log("Education:", eduRes);
+        console.log("Experience:", expRes);
 
-    // Fetch Overview
-    fetch("http://localhost:8000/getOverview")
-      .then((res) => res.json())
-      .then((data) => setOverview(data))
-      .catch((err) => console.error("Error fetching overview:", err));
+        setOverview(overviewRes);
+        setEducation(eduRes);
+        setExperience(expRes);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
-    <div style={{ padding: "15px", fontFamily: "Arial, sans-serif" }}>
+    <div className="container">
       <h1>My Portfolio</h1>
 
-      <section>
-        <h2>Overview</h2>
-        <p>{overview}</p>
+      <section className="section">
+        <h2 className="section-title">Overview</h2>
+        <p className="item">{loading ? "Loading..." : overview}</p>
       </section>
 
-      <section>
-        <h2>Education</h2>
-        <ul>
-          {education.map((edu, index) => (
-            <li key={index}>{edu.degree} - {edu.school} ({edu.year})</li>
-          ))}
-        </ul>
+      <section className="section">
+        <h2 className="section-title">Education</h2>
+        {loading ? (
+          <p className="item">Loading...</p>
+        ) : education.length > 0 ? (
+          <ul>
+            {education.map((edu, index) => (
+              <li className="item" key={index}>
+                <strong>{edu.degree}</strong> - {edu.school} ({edu.year})
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="item">No education records available.</p>
+        )}
       </section>
 
-      <section>
-        <h2>Experience</h2>
-        <ul>
-          {experience.map((exp, index) => (
-            <li key={index}>{exp.role} at {exp.company} ({exp.years})</li>
-          ))}
-        </ul>
+      <section className="section">
+        <h2 className="section-title">Experience</h2>
+        {loading ? (
+          <p className="item">Loading...</p>
+        ) : experience.length > 0 ? (
+          <ul>
+            {experience.map((exp, index) => (
+              <li className="item" key={index}>
+                <strong>{exp.role}</strong> at {exp.company} ({exp.years})
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="item">No experience records available.</p>
+        )}
       </section>
     </div>
   );
-};
+}
 
 export default App;
