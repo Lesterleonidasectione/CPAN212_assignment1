@@ -1,89 +1,56 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { useEffect, useState } from "react";
 
 const App = () => {
-  const [overview, setOverview] = useState({});
-  const [displayImage, setDisplayImage] = useState(null);
-  const [displayImages, setDisplayImages] = useState([]);
-  const [singleFile, setSingleFile] = useState(null);
-  const [message, setMessage] = useState("");
+  const [education, setEducation] = useState([]);
+  const [experience, setExperience] = useState([]);
+  const [overview, setOverview] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:8000/getOverview")
-      .then((res) => setOverview(res.data))
-      .catch((err) => console.error(err));
+    // Fetch Education
+    fetch("http://localhost:8000/getEdu")
+      .then((res) => res.json())
+      .then((data) => setEducation(data))
+      .catch((err) => console.error("Error fetching education:", err));
+
+    // Fetch Experience
+    fetch("http://localhost:8000/getExp")
+      .then((res) => res.json())
+      .then((data) => setExperience(data))
+      .catch((err) => console.error("Error fetching experience:", err));
+
+    // Fetch Overview
+    fetch("http://localhost:8000/getOverview")
+      .then((res) => res.json())
+      .then((data) => setOverview(data))
+      .catch((err) => console.error("Error fetching overview:", err));
   }, []);
 
-  const fetchSingleFile = async () => {
-    try {
-      const response = await fetch("http://localhost:8000/fetch/single");
-      setDisplayImage(URL.createObjectURL(await response.blob()));
-    } catch (error) {
-      console.error("Error fetching single file:", error);
-    }
-  };
-
-  const fetchMultipleImages = async () => {
-    try {
-      const response = await fetch("http://localhost:8000/fetch/multiple");
-      const filenames = await response.json();
-      const imageUrls = await Promise.all(
-        filenames.map(async (filename) => {
-          const fetchFile = await fetch(`http://localhost:8000/fetch/file/${filename}`);
-          return URL.createObjectURL(await fetchFile.blob());
-        })
-      );
-      setDisplayImages(imageUrls);
-    } catch (error) {
-      console.error("Error fetching images:", error);
-    }
-  };
-
-  const handleSingleFileChange = (e) => setSingleFile(e.target.files[0]);
-
-  const handleSubmitSingleFile = async (e) => {
-    e.preventDefault();
-    if (!singleFile) return setMessage("Please select a file before uploading.");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", singleFile);
-      const response = await fetch("http://localhost:8000/save/single", {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) throw new Error("Image upload failed");
-      setMessage("File uploaded successfully!");
-    } catch (error) {
-      console.log("Error:", error);
-    }
-  };
-
   return (
-    <div className="container mt-5">
-      <h1>{overview.name}</h1>
-      <h3>{overview.role}</h3>
+    <div style={{ padding: "15px", fontFamily: "Arial, sans-serif" }}>
+      <h1>My Portfolio</h1>
 
-      <button className="btn btn-primary mt-3" onClick={fetchSingleFile}>
-        Fetch Single File
-      </button>
-      {displayImage && <img src={displayImage} alt="Display" className="mt-3" style={{ width: "200px" }} />}
+      <section>
+        <h2>Overview</h2>
+        <p>{overview}</p>
+      </section>
 
-      <form onSubmit={handleSubmitSingleFile} className="mt-3">
-        <input type="file" onChange={handleSingleFileChange} className="form-control" />
-        <button type="submit" className="btn btn-success mt-2">Upload File</button>
-      </form>
-      <p>{message}</p>
+      <section>
+        <h2>Education</h2>
+        <ul>
+          {education.map((edu, index) => (
+            <li key={index}>{edu.degree} - {edu.school} ({edu.year})</li>
+          ))}
+        </ul>
+      </section>
 
-      <button className="btn btn-info mt-3" onClick={fetchMultipleImages}>
-        Fetch Multiple Files
-      </button>
-      <div className="d-flex flex-wrap mt-3">
-        {displayImages.map((img, index) => (
-          <img key={index} src={img} alt="Multiple" className="m-2" style={{ width: "150px" }} />
-        ))}
-      </div>
+      <section>
+        <h2>Experience</h2>
+        <ul>
+          {experience.map((exp, index) => (
+            <li key={index}>{exp.role} at {exp.company} ({exp.years})</li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 };

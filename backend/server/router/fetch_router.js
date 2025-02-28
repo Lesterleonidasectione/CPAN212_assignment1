@@ -18,17 +18,12 @@ router.get("/single", (req, res) => {
   res.sendFile(path.join(upload_directory, filename));
 });
 
-// Fetch Specific File
-router.get("/file/:filename", (req, res) => {
-  res.sendFile(path.join(upload_directory, req.params.filename));
-});
-
 // Fetch Multiple Files
 router.get("/multiple", (req, res) => {
   const files = fs.readdirSync(upload_directory);
   if (files.length === 0) return res.status(503).json({ message: "No images available" });
 
-  let filenames = _.sampleSize(files, Math.min(files.length, 12));
+  let filenames = _.sampleSize(files, Math.min(files.length, 3));
   res.json(filenames);
 });
 
